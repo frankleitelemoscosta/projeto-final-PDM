@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projeto_final/Contacts.dart';
 import './HomePage.dart';
 
 void main(){
@@ -20,6 +21,7 @@ class _myAppState extends State<myApp> {
       initialRoute: '/',
       routes: {
         '/': (context) => Homepage(),
+        'contacts': (context) => Contacts()
       },
       );
   }
