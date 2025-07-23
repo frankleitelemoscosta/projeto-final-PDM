@@ -1,28 +1,22 @@
 import 'package:flutter/material.dart';
-import 'package:projeto_final/Contacts.dart';
-import './HomePage.dart';
+import 'package:projeto_final/ContactsProvider.dart';
+import 'package:projeto_final/HomePage.dart';
+import 'package:provider/provider.dart';
 
-void main(){
-  runApp(myApp());
+void main() {
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ContactsProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
-class myApp extends StatefulWidget {
-  const myApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
-  @override
-  State<myApp> createState() => _myAppState();
-}
-
-class _myAppState extends State<myApp> {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      initialRoute: '/',
-      routes: {
-        '/': (context) => Homepage(),
-        'contacts': (context) => Contacts()
-      },
-      );
+    return MaterialApp(home: Homepage());
   }
 }

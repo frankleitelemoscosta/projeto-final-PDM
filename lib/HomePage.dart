@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-
-class Contact {
-  final String name;
-  final String number;
-  final Color color;
-
-  Contact({required this.name, required this.number, required this.color});
-}
+import 'package:projeto_final/Avatar.dart';
+import 'package:projeto_final/ContactsProvider.dart';
+import 'package:projeto_final/Details.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
+import 'dart:async';
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -16,142 +14,147 @@ class Homepage extends StatefulWidget {
 }
 
 class _HomepageState extends State<Homepage> {
-  final contacts = [
-    Contact(name: 'João Silva', number: '(11) 9999-8888', color: Colors.blue),
-    Contact(name: 'Maria Souza', number: '(21) 8888-7777', color: Colors.green),
-    Contact(
-      name: 'Carlos Lima',
-      number: '(31) 7777-6666',
-      color: Colors.orange,
-    ),
-    Contact(name: 'Ana Costa', number: '(41) 6666-5555', color: Colors.purple),
-    Contact(name: 'Pedro Rocha', number: '(51) 5555-4444', color: Colors.red),
-    Contact(name: 'Luiza Mendes', number: '(61) 4444-3333', color: Colors.teal),
-    Contact(
-      name: 'Fernando Gomes',
-      number: '(71) 3333-2222',
-      color: Colors.indigo,
-    ),
-    Contact(
-      name: 'Patricia Alves',
-      number: '(81) 2222-1111',
-      color: Colors.pink,
-    ),
-    Contact(
-      name: 'Ricardo Nunes',
-      number: '(91) 1111-0000',
-      color: Colors.cyan,
-    ),
-    Contact(name: 'Camila Dias', number: '(01) 0000-9999', color: Colors.lime),
-    Contact(
-      name: 'Gustavo Santos',
-      number: '(02) 9999-8888',
-      color: Colors.deepOrange,
-    ),
-    Contact(
-      name: 'Juliana Lima',
-      number: '(03) 8888-7777',
-      color: Colors.deepPurple,
-    ),
-    Contact(
-      name: 'Roberto Castro',
-      number: '(04) 7777-6666',
-      color: Colors.brown,
-    ),
-    Contact(
-      name: 'Amanda Rios',
-      number: '(05) 6666-5555',
-      color: Colors.blueGrey,
-    ),
-    Contact(
-      name: 'Leonardo Moura',
-      number: '(06) 5555-4444',
-      color: Colors.amber,
-    ),
-    Contact(
-      name: 'Tatiane Neves',
-      number: '(07) 4444-3333',
-      color: Colors.lightBlue,
-    ),
-    Contact(
-      name: 'Marcos Antunes',
-      number: '(08) 3333-2222',
-      color: Colors.lightGreen,
-    ),
-    Contact(
-      name: 'Vanessa Dias',
-      number: '(09) 2222-1111',
-      color: Colors.deepPurpleAccent,
-    ),
-    Contact(
-      name: 'Felipe Costa',
-      number: '(10) 1111-0000',
-      color: Colors.indigoAccent,
-    ),
-    Contact(
-      name: 'Isabela Ramos',
-      number: '(12) 0000-9999',
-      color: Colors.pinkAccent,
-    ),
-  ];
+  late StreamController<double> _progressController;
 
-  bool showContacts = false;
+  bool _permissionDenied = false;
+  bool get permissionDenied => _permissionDenied;
+
+  final CarouselController controller = CarouselController(initialItem: 1);
+
+  @override
+  void initState() {
+    super.initState();
+    _progressController = StreamController<double>();
+    _progressController.add(0.0);
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final contactsProvider = Provider.of<ContactsProvider>(context);
+
+    Future<void> requestPermissionAndFetchContacts() async {
+      _progressController.add(1.0);
+
+      await Future.delayed(const Duration(seconds: 3));
+
+      await contactsProvider.requestPermissionAndFetchContacts();
+
+      _progressController.add(0.0);
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('App Contacts'),
+        title: const Text(
+          'Lista de Contatos',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Colors.blue,
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: requestPermissionAndFetchContacts,
+        child: const Icon(Icons.refresh),
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Center(
-              child: Column(
-                children: [
-                  ElevatedButton(
-                    onPressed:
-                        () => setState(() => showContacts = !showContacts),
-                    child: Text(
-                      showContacts ? 'Hide contacts' : 'Open your contacts',
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {},
-                    child: const Text('Add a new contact'),
-                  ),
-                ],
+          if (permissionDenied)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  'Permissão negada. Ative as permissões de contatos nas configurações.',
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
               ),
-            ),
-          ),
-
-          if (showContacts)
+            )
+          else
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                itemCount: contacts.length,
-                itemBuilder: (context, index) {
-                  return TweenAnimationBuilder<double>(
-                    tween: Tween(begin: 0, end: 1),
-                    duration: const Duration(milliseconds: 2000),
-                    curve: Curves.easeOut,
-                    builder: (context, value, child) {
-                      return Opacity(
-                        opacity: value,
-                        child: Transform.translate(
-                          offset: Offset(0, 20 * (1 - value)),
-                          child: child,
+              child: Center(
+                child: StreamBuilder<double>(
+                  stream: _progressController.stream,
+                  initialData: 0.0,
+                  builder: (context, snapshot) {
+                    double progress = snapshot.data ?? 0.0;
+
+                    if (contactsProvider.contacts.isEmpty && progress == 0.0) {
+                      return Center(
+                        child: Text(
+                          'Nenhum contato encontrado. Tente novamente.',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                          ),
                         ),
                       );
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 12.0),
-                      child: ContactCard(contact: contacts[index]),
-                    ),
-                  );
-                },
+                    }
+
+                    if (progress == 0.0) {
+                      return Column(
+                        children: [
+                          ConstrainedBox(
+                            constraints: BoxConstraints(maxHeight: 100),
+                            child: CarouselView.weighted(
+                              controller: controller,
+                              // itemSnapping: true,
+                              // consumeMaxWeight: false,
+                              flexWeights: const <int>[1, 4, 1],
+                              itemSnapping: true,
+                              shrinkExtent: 1000,
+                              children:
+                                  contactsProvider.favorites.map((
+                                    Contact contact,
+                                  ) {
+                                    return ContactCard(contact: contact);
+                                  }).toList(),
+                            ),
+                          ),
+                          Expanded(
+                            child: ListView.builder(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                              ),
+                              itemCount: contactsProvider.contacts.length,
+                              itemBuilder: (context, index) {
+                                return TweenAnimationBuilder<double>(
+                                  tween: Tween(begin: 0, end: 1),
+                                  duration: const Duration(milliseconds: 2000),
+                                  curve: Curves.easeOut,
+                                  builder: (context, value, child) {
+                                    return Opacity(
+                                      opacity: value,
+                                      child: Transform.translate(
+                                        offset: Offset(0, 20 * (1 - value)),
+                                        child: child,
+                                      ),
+                                    );
+                                  },
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                      bottom: 12.0,
+                                    ),
+                                    child: ContactCard(
+                                      contact: contactsProvider.contacts[index],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+
+                    return LinearProgressIndicator(
+                      backgroundColor: Colors.grey[300],
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                    );
+                  },
+                ),
               ),
             ),
         ],
@@ -167,35 +170,103 @@ class ContactCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: contact.color,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 3,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            const Icon(Icons.person, size: 40, color: Colors.white),
-            const SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  contact.name,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  contact.number,
-                  style: const TextStyle(color: Colors.white70, fontSize: 14),
-                ),
-              ],
+    final contactsProvider = Provider.of<ContactsProvider>(context);
+
+    bool isFavorite = contactsProvider.favorites.contains(contact);
+
+    return GestureDetector(
+      onTap:
+          () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ContactDetailsPage(contact: contact),
             ),
-          ],
+          ),
+      child: Card(
+        color: Colors.blue,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 3,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // Calculate available width for content
+              double availableWidth = constraints.maxWidth;
+              double avatarWidth = 40; // Approximate avatar width
+              double iconButtonWidth = 48; // IconButton default width
+              double spacingWidth = 16; // Total spacing (8 + 4 + 4)
+              double contentWidth =
+                  availableWidth - avatarWidth - iconButtonWidth - spacingWidth;
+
+              bool showAvatar =
+                  availableWidth > 80; // Minimum width needed for avatar
+
+              // Determine what to show based on available space
+              bool showPhoneNumber =
+                  contentWidth >
+                  120; // Minimum width needed for both name and phone
+              bool showIconButton =
+                  availableWidth >
+                  120; // Minimum width needed to show the button
+
+              return ClipRect(
+                child: Row(
+                  children: [
+                    if (showAvatar) ContactAvatar(contact: contact),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            contact.displayName,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                          if (showPhoneNumber && contact.phones.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              contact.phones.first.number,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    if (showIconButton) ...[
+                      const SizedBox(width: 4),
+                      SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: IconButton(
+                          padding: EdgeInsets.zero,
+                          onPressed: () {
+                            contactsProvider.addToFavorites(contact);
+                          },
+                          icon: Icon(
+                            Icons.favorite,
+                            color: isFavorite ? Colors.red : Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
