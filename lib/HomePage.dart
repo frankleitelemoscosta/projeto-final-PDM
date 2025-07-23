@@ -95,24 +95,75 @@ class _HomepageState extends State<Homepage> {
 
                     if (progress == 0.0) {
                       return Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          ConstrainedBox(
-                            constraints: BoxConstraints(maxHeight: 100),
-                            child: CarouselView.weighted(
-                              controller: controller,
-                              // itemSnapping: true,
-                              // consumeMaxWeight: false,
-                              flexWeights: const <int>[1, 4, 1],
-                              itemSnapping: true,
-                              shrinkExtent: 1000,
-                              children:
-                                  contactsProvider.favorites.map((
-                                    Contact contact,
-                                  ) {
-                                    return ContactCard(contact: contact);
-                                  }).toList(),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 16, top: 8),
+                            child: Text(
+                              'Contatos Favoritos',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
                             ),
                           ),
+                          ConstrainedBox(
+                            constraints: BoxConstraints(maxHeight: 100),
+                            child:
+                                contactsProvider.favorites.isNotEmpty
+                                    ? CarouselView.weighted(
+                                      controller: controller,
+                                      flexWeights: const <int>[1, 4, 1],
+                                      shrinkExtent: 100,
+                                      onTap:
+                                          (value) => Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder:
+                                                  (
+                                                    context,
+                                                  ) => ContactDetailsPage(
+                                                    contact:
+                                                        contactsProvider
+                                                            .favorites[value],
+                                                  ),
+                                            ),
+                                          ),
+                                      children:
+                                          contactsProvider.favorites.map((
+                                            Contact contact,
+                                          ) {
+                                            return ContactCard(
+                                              contact: contact,
+                                            );
+                                          }).toList(),
+                                    )
+                                    : Center(
+                                      child: Text(
+                                        "Seus contatos favoritos aparecerão aqui.",
+                                        style: TextStyle(color: Colors.black),
+                                      ),
+                                    ),
+                          ),
+
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              left: 16,
+                              top: 8,
+                              bottom: 8,
+                            ),
+                            child: Text(
+                              'Todos os Contatos',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ),
+
                           Expanded(
                             child: ListView.builder(
                               padding: const EdgeInsets.symmetric(
@@ -174,45 +225,35 @@ class ContactCard extends StatelessWidget {
 
     bool isFavorite = contactsProvider.favorites.contains(contact);
 
-    return GestureDetector(
-      onTap:
-          () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ContactDetailsPage(contact: contact),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 120) {
+          return Card(color: Colors.blue);
+        }
+
+        return GestureDetector(
+          onTap:
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ContactDetailsPage(contact: contact),
+                ),
+              ),
+          child: Card(
+            color: Colors.blue,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
-          ),
-      child: Card(
-        color: Colors.blue,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 3,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              // Calculate available width for content
-              double availableWidth = constraints.maxWidth;
-              double avatarWidth = 40; // Approximate avatar width
-              double iconButtonWidth = 48; // IconButton default width
-              double spacingWidth = 16; // Total spacing (8 + 4 + 4)
-              double contentWidth =
-                  availableWidth - avatarWidth - iconButtonWidth - spacingWidth;
-
-              bool showAvatar =
-                  availableWidth > 80; // Minimum width needed for avatar
-
-              // Determine what to show based on available space
-              bool showPhoneNumber =
-                  contentWidth >
-                  120; // Minimum width needed for both name and phone
-              bool showIconButton =
-                  availableWidth >
-                  120; // Minimum width needed to show the button
-
-              return ClipRect(
+            elevation: 3,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 6,
+              ), // Reduced padding
+              child: ClipRect(
                 child: Row(
                   children: [
-                    if (showAvatar) ContactAvatar(contact: contact),
+                    ContactAvatar(contact: contact),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Column(
@@ -229,8 +270,8 @@ class ContactCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
                           ),
-                          if (showPhoneNumber && contact.phones.isNotEmpty) ...[
-                            const SizedBox(height: 2),
+                          const SizedBox(height: 2),
+                          if (contact.phones.isNotEmpty)
                             Text(
                               contact.phones.first.number,
                               style: const TextStyle(
@@ -240,35 +281,32 @@ class ContactCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
                             ),
-                          ],
                         ],
                       ),
                     ),
-                    if (showIconButton) ...[
-                      const SizedBox(width: 4),
-                      SizedBox(
-                        width: 40,
-                        height: 40,
-                        child: IconButton(
-                          padding: EdgeInsets.zero,
-                          onPressed: () {
-                            contactsProvider.addToFavorites(contact);
-                          },
-                          icon: Icon(
-                            Icons.favorite,
-                            color: isFavorite ? Colors.red : Colors.white,
-                            size: 20,
-                          ),
+                    const SizedBox(width: 4),
+                    SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: IconButton(
+                        padding: EdgeInsets.zero,
+                        onPressed: () {
+                          contactsProvider.addToFavorites(contact);
+                        },
+                        icon: Icon(
+                          Icons.favorite,
+                          color: isFavorite ? Colors.red : Colors.white,
+                          size: 20,
                         ),
                       ),
-                    ],
+                    ),
                   ],
                 ),
-              );
-            },
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

@@ -5,8 +5,9 @@ import 'package:provider/provider.dart';
 
 class ContactAvatar extends StatefulWidget {
   final Contact contact;
+  final double radius;
 
-  const ContactAvatar({super.key, required this.contact});
+  const ContactAvatar({super.key, required this.contact, this.radius = 20});
 
   @override
   State<ContactAvatar> createState() => _ContactAvatarState();
@@ -27,7 +28,7 @@ class _ContactAvatarState extends State<ContactAvatar> {
             : '?';
 
     return CircleAvatar(
-      radius: 20,
+      radius: widget.radius,
       backgroundColor: Colors.white,
       backgroundImage:
           backgroundImage != null ? FileImage(backgroundImage) : null,

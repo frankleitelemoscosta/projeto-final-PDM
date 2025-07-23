@@ -35,9 +35,16 @@ class _ContactDetailsPageState extends State<ContactDetailsPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.contact.displayName),
+        title: Text(
+          widget.contact.displayName,
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Colors.blue,
+        iconTheme: IconThemeData(
+          color: Colors.white, // This changes the back icon color
+        ),
       ),
+
       floatingActionButton: FloatingActionButton(
         onPressed: takePhoto,
         child: const Icon(Icons.camera_alt),
@@ -47,7 +54,7 @@ class _ContactDetailsPageState extends State<ContactDetailsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(child: ContactAvatar(contact: widget.contact)),
+            Center(child: ContactAvatar(contact: widget.contact, radius: 60)),
             const SizedBox(height: 24),
             Text(
               'Name',

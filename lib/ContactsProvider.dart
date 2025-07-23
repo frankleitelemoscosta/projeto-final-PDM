@@ -13,7 +13,7 @@ class ContactsProvider extends ChangeNotifier {
   List<Contact> get favorites => _favorites;
 
   Future<void> requestPermissionAndFetchContacts() async {
-    _contacts = await FlutterContacts.getContacts();
+    _contacts = await FlutterContacts.getContacts(withProperties: true);
 
     notifyListeners();
   }
